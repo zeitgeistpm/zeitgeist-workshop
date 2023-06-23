@@ -25,8 +25,11 @@ mod tests;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 
+// REF 0: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/primitives/src/types.rs#L99
 pub type MarketId = u128;
 
+// REF 1: https://github.com/zeitgeistpm/zeitgeist/blob/main/docs/diagrams/svg/market_state_diagram.svg
+// REF 2: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/primitives/src/market.rs#L229-L251
 #[derive(Decode, Encode, MaxEncodedLen, TypeInfo, Clone, Debug, PartialEq, Eq)]
 pub enum MarketStatus {
 	Active,
@@ -35,6 +38,7 @@ pub enum MarketStatus {
 	Redeemed,
 }
 
+// REF 3: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/primitives/src/market.rs#L33-L66
 #[derive(Decode, Encode, MaxEncodedLen, TypeInfo, Clone, Debug, PartialEq, Eq)]
 pub struct Market<AccountId, BlockNumber, Balance> {
 	pub creator: AccountId,
@@ -46,6 +50,7 @@ pub struct Market<AccountId, BlockNumber, Balance> {
 	pub status: MarketStatus,
 }
 
+// REF 4: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/primitives/src/outcome_report.rs#L21-L36
 #[derive(Decode, Encode, TypeInfo, Clone, Debug, PartialEq, Eq)]
 pub struct Outcome<AccountId, Balance> {
 	pub owner: AccountId,
@@ -93,7 +98,6 @@ pub mod pallet {
 	pub type MarketOf<T> = Market<AccountIdOf<T>, BlockNumberFor<T>, BalanceOf<T>>;
 	pub type OutcomesOf<T> =
 		BoundedVec<Outcome<AccountIdOf<T>, BalanceOf<T>>, <T as Config>::MaxOutcomes>;
-
 	pub type CacheSize = frame_support::pallet_prelude::ConstU32<64>;
 
 	#[pallet::pallet]
@@ -106,6 +110,7 @@ pub mod pallet {
 
 		type Currency: ReservableCurrency<Self::AccountId>;
 
+		// REF 5: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/zrml/prediction-markets/src/lib.rs#L783-L794 
 		#[pallet::constant]
 		type CreatorBond: Get<BalanceOf<Self>>;
 
@@ -131,11 +136,13 @@ pub mod pallet {
 		1u128
 	}
 
+	// REF 6: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/zrml/market-commons/src/lib.rs#L128-L133
 	#[pallet::storage]
 	#[pallet::getter(fn market_counter)]
 	pub type MarketCounter<T: Config> =
 		StorageValue<_, MarketId, ValueQuery, DefaultMarketCounter<T>>;
 
+	// REF 7: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/zrml/market-commons/src/lib.rs#L230-L231
 	#[pallet::storage]
 	pub type Markets<T: Config> =
 		StorageMap<_, Blake2_128Concat, MarketId, MarketOf<T>, ValueQuery>;
@@ -144,6 +151,7 @@ pub mod pallet {
 	pub type Outcomes<T: Config> =
 		StorageMap<_, Blake2_128Concat, MarketId, OutcomesOf<T>, ValueQuery>;
 
+	// REF 8: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/zrml/prediction-markets/src/lib.rs#L2003-L2010
 	#[pallet::storage]
 	pub type MarketIdsPerCloseBlock<T: Config> = StorageMap<
 		_,
@@ -187,6 +195,7 @@ pub mod pallet {
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		// REF 9: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/zrml/prediction-markets/src/lib.rs#L1859
 		fn on_initialize(n: T::BlockNumber) -> Weight {
 			let mut total_weight = Weight::zero();
 
@@ -238,6 +247,7 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+		// REF 10: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/zrml/prediction-markets/src/lib.rs#L768-L779
 		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::do_something())]
 		pub fn create_market(
@@ -304,6 +314,7 @@ pub mod pallet {
 
 		// TODO 14: What does `Pays::No` mean? Why is it only placed here?
 		// TODO 15: What does `DispatchClass::Operational` mean? Why is it only placed here?
+		// REF 11: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/zrml/prediction-markets/src/lib.rs#L323-L326
 		#[pallet::call_index(0)]
 		#[pallet::weight((T::WeightInfo::do_something(), DispatchClass::Operational, Pays::No))]
 		pub fn destroy_market(
@@ -326,6 +337,7 @@ pub mod pallet {
 		// TODO 17: What could be done instead of `Pays::Yes` to get the same effect?
 		// TODO 18: What does `DispatchClass::Normal` mean?
 		// TODO 19: Why could this `transactional` be useful here? Why is not used in other calls?
+		// REF 12: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/zrml/prediction-markets/src/lib.rs#L614-L618
 		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::do_something(), DispatchClass::Normal, Pays::Yes)]
 		#[frame_support::transactional]
@@ -386,6 +398,7 @@ pub mod pallet {
 		}
 
 		// TODO 20: What could the users do, if the oracle is not honest? What is done at Zeitgeist to solve this problem?
+		// REF 13: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/zrml/prediction-markets/src/lib.rs#L1271-L1275
 		#[pallet::call_index(3)]
 		#[pallet::weight(T::WeightInfo::do_something())]
 		pub fn report_as_oracle(
@@ -413,6 +426,7 @@ pub mod pallet {
 			Ok(())
 		}
 
+		// REF 14: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/zrml/prediction-markets/src/lib.rs#L1092-L1095
 		#[pallet::call_index(4)]
 		#[pallet::weight(T::WeightInfo::do_something())]
 		pub fn redeem(
