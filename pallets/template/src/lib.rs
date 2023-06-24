@@ -26,9 +26,10 @@ mod tests;
 mod benchmarking;
 
 // REF 0: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/primitives/src/types.rs#L99
+// https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=f664b6e416fa6123689b3792c8ba2522
 pub type MarketId = u128;
 
-// REF 1: https://github.com/zeitgeistpm/zeitgeist/blob/main/docs/diagrams/svg/market_state_diagram.svg
+// REF 1: https://raw.githubusercontent.com/zeitgeistpm/zeitgeist/main/docs/diagrams/svg/market_state_diagram.svg
 // REF 2: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/primitives/src/market.rs#L229-L251
 #[derive(Decode, Encode, MaxEncodedLen, TypeInfo, Clone, Debug, PartialEq, Eq)]
 pub enum MarketStatus {
@@ -51,6 +52,7 @@ pub struct Market<AccountId, BlockNumber, Balance> {
 }
 
 // REF 4: https://github.com/zeitgeistpm/zeitgeist/blob/c347f33c37838797be7323a52ed64b6ef14d4241/primitives/src/outcome_report.rs#L21-L36
+// https://play.rust-lang.org/?version=stable&mode=debug&edition=2021&gist=33010e78965ab676cf09b03707be80fe
 #[derive(Decode, Encode, TypeInfo, Clone, Debug, PartialEq, Eq)]
 pub struct Outcome<AccountId, Balance> {
 	pub owner: AccountId,
